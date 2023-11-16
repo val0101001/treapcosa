@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://btwwbnusvrrpl"]
+
+[ext_resource type="Script" path="res://Treap.cs" id="1_3v0pf"]
+[ext_resource type="Script" path="res://LineDrawer.cs" id="2_ucchb"]
+
+[node name="Treap" type="Node"]
+script = ExtResource("1_3v0pf")
+
+[node name="LineDrawer" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("2_ucchb")
