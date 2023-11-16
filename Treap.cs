@@ -43,22 +43,28 @@ public partial class Treap:Godot.Node{
         k1.priority = Math.Max(k2.right.priority, k2.left.priority) + 1;
     }
 
-    private TreapNode Insert(int x, TreapNode t, TreapNode parent){
+    private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left){
         if (t == nullNode){
 			TreapNode new_child=new TreapNode(x, nullNode, nullNode, random.Next());
 			new_child.instance=draw_node();
+
+			new_child.instance.Position = new Vector2(
+				parent.instance.Position.X+(left?-1:1)*100,
+				parent.instance.Position.Y+100
+			);
+
 			return new_child;
 		}
 
         else if (x<t.element)
         {
-            t.left = Insert(x, t.left,t);
+            t.left = Insert(x, t.left,t,true);
             if (t.left.priority < t.priority)
                 RotateWithLeftChild(ref t);
         }
         else if (x>t.element)
         {
-            t.right = Insert(x, t.right,t);
+            t.right = Insert(x, t.right,t,false);
             if (t.right.priority < t.priority)
                 RotateWithRightChild(ref t);
         }
@@ -126,7 +132,6 @@ public partial class Treap:Godot.Node{
 
 		var node_instance=(GDTreapNode)TNode.Instantiate();
 		AddChild(node_instance);
-		node_instance.Position = new Vector2(100, 100);
 
 		return node_instance;
     }
@@ -135,9 +140,10 @@ public partial class Treap:Godot.Node{
 		if(root==nullNode){
 			root=new TreapNode(x, nullNode, nullNode, random.Next());
 			root.instance=draw_node();
+			root.instance.Position = new Vector2(500, 100);
 			return;
 		}
-        root = Insert(x, root, null);
+        root = Insert(x, root, null,false);
     }
 
     public void Remove(int x){
@@ -164,7 +170,7 @@ public partial class Treap:Godot.Node{
 	private PackedScene TNode;
 	private LineDrawer drawer;
 	private int i = 0;
-    private float timer = 0.0f;
+    private float timer = 4.5f;
     private const float insertDelay = 5.0f;
 
 	public override void _Process(double delta){
