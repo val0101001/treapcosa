@@ -3,14 +3,19 @@ using System;
 
 public partial class GDTreapNode : Node2D
 {
-	// Called when the node enters the scene tree for the first time.
-	
-	public override void _Ready(){
-		
+	public Label label;
+	private bool hasTextChanged = false;
+
+	public override void _Ready()
+	{
+		label = GetNode<Label>("Label");
+		label.Modulate = new Color(0, 0, 0);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+	// Método para establecer el texto
+	public void SetLabelText(string text)
 	{
+		label.Text = text;
+		hasTextChanged = true;
 	}
 }
