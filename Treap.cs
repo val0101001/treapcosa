@@ -10,7 +10,6 @@ public partial class Treap:Godot.Node{
 		public int priority;
 
 		public TreapNode() : this(default(int), null, null, int.MaxValue) { }
-
 		public TreapNode(int e, TreapNode lt, TreapNode rt, int pr){
 			element = e;
 			left = lt;
@@ -18,72 +17,120 @@ public partial class Treap:Godot.Node{
 			priority = pr;
 		}
 	}
-
+	private int height=0;
 	private TreapNode root;
 	private TreapNode nullNode;
 	private readonly Random random = new Random();
-
-	private void RotateWithLeftChild(ref TreapNode k2){
-		GD.Print("(LEFT)");
-		TreapNode k1 = k2.left;
-		k2.left = k1.right;
-		k1.right = k2;
-		k2 = k1;
-		
-		k1.right.priority = k2.priority;
-		k2.priority = Math.Max(k1.left.priority, k1.right.priority) + 1;
+	// Para graficar rot_derecha
+	private TreapNode hijos_d(ref TreapNode hijo, int val){
+		if(hijo==nullNode)
+			return nullNode;
+		hijo.instance.Position= new Vector2(
+			hijo.instance.Position.X-val,
+			hijo.instance.Position.Y+(val)
+			);
+		GD.Print(hijo.left.element.ToString());
+		hijo.left=hijos_d(ref hijo.left,val);
+		hijo.right=hijos_d(ref hijo.right,val);	
+		return hijo;
 	}
-	private void hijos(ref TreapNode hijo, int val){
-		if(hijo==null) return;
-		hijo.instance.GlobalPosition= new Vector2(
+	private TreapNode hijos_truquito_d(ref TreapNode hijo,int val){
+		hijo.instance.Position= new Vector2(
+			hijo.instance.Position.X-val,
+			hijo.instance.Position.Y+val
+			);
+		hijo.left=hijos_d(ref hijo.left,val);
+		return hijo;
+	}
+	//grafico rot_izquierdo
+	private TreapNode hijos_i(ref TreapNode hijo, int val){
+		if(hijo==nullNode)
+			return nullNode;
+		hijo.instance.Position= new Vector2(
+			hijo.instance.Position.X+val,
+			hijo.instance.Position.Y+(val)
+			);
+		GD.Print(hijo.left.element.ToString());
+		hijo.left=hijos_i(ref hijo.left,val);
+		hijo.right=hijos_i(ref hijo.right,val);	
+		return hijo;
+	}
+	private TreapNode hijos_truquito_i(ref TreapNode hijo,int val){
+		hijo.instance.Position= new Vector2(
 			hijo.instance.Position.X+val,
 			hijo.instance.Position.Y+val
 			);
-		hijos(ref hijo.left,val+50);
-		hijos(ref hijo.right,val+50);
-		
+		hijo.right=hijos_i(ref hijo.right,val);
+		return hijo;
 	}
+	private void RotateWithLeftChild(ref TreapNode k2){
+		GD.Print("(LEFT)");
+		k2=hijos_truquito_i(ref k2,150);
+		TreapNode k1 = k2.left;
+		k2.left = k1.right;
+		k1.right = k2;
+		if(k2==root)
+			root= k1;
+		k2 = k1;
+		
+		k2.instance.Position= new Vector2(
+			k2.instance.Position.X+150,
+			k2.instance.Position.Y-150
+		);
+	}
+
 	private void RotateWithRightChild(ref TreapNode k1){
 		GD.Print("(Right)");
+		k1=hijos_truquito_d(ref k1,150);
 		TreapNode k2 = k1.right;
 		k1.right = k2.left;
-		k2.left = k1;
-		k1 = k2;
-		
-		k2.left.priority = k1.priority;
-		k1.priority = Math.Max(k2.right.priority, k2.left.priority) + 1;
+		k2.left = k1;	
+		if(k1==root)
+			root= k2;
+		k1=k2;
+		k1.instance.Position= new Vector2(
+			k1.instance.Position.X-150,
+			k1.instance.Position.Y-150
+		);
+
 	}
 
-	private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left){
-		if (t == nullNode){
-			TreapNode new_child=new TreapNode(x, nullNode, nullNode, random.Next());
-			new_child.instance=draw_node();
-			new_child.instance.SetLabelText(x.ToString());
+private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int level)
+{
+	if (t == nullNode)
+	{
+		TreapNode new_child = new TreapNode(x, nullNode, nullNode, random.Next());
+		new_child.instance = draw_node();
+		new_child.instance.SetLabelText(x.ToString());
+		GD.Print($"{height} , {level}");
+		// sacale el (1+(0.2*(height-level + 1))) y queda con colision
+		double xOffset = (left ? -1 : 1) * 150 *(1+(0.2*(height-level + 1)));
+		new_child.instance.Position = new Vector2(
+			parent.instance.Position.X + (float)xOffset,
+			parent.instance.Position.Y + 150
+		);
 
-			new_child.instance.Position = new Vector2(
-				parent.instance.Position.X+(left?-1:1)*100,
-				parent.instance.Position.Y+100
-			);
-
-			return new_child;
-		}
-
-		else if (x<t.element)
-		{
-
-			t.left = Insert(x, t.left,t,true);
-			if (t.left.priority < t.priority)
-				RotateWithLeftChild(ref t);
-		}
-		else if (x>t.element)
-		{
-			t.right = Insert(x, t.right,t,false);
-			if (t.right.priority < t.priority)
-				RotateWithRightChild(ref t);
-		}
-
-		return t;
+		GD.Print($"valorInsert: {new_child.element}, priority:{new_child.priority}, EjeX= {new_child.instance.Position.X}, EjeY= {new_child.instance.Position.Y}");
+		GD.Print($"valorParent: {parent.element}, priority:{parent.priority}, EjeXParent= {parent.instance.Position.X}, EjeYParent= {parent.instance.Position.Y}");
+		// lo agregue para la colision
+		height+=1;
+		return new_child;
 	}
+	else if (x < t.element)
+	{
+		t.left = Insert(x, t.left, t, true, level + 1);
+		if (t.left.priority < t.priority)
+			RotateWithLeftChild(ref t);
+	}
+	else if (x > t.element)
+	{
+		t.right = Insert(x, t.right, t, false, level + 1);
+		if (t.right.priority < t.priority)
+			RotateWithRightChild(ref t);
+	}
+	return t;
+}
+
 
 	private TreapNode Remove(int x, TreapNode t){
 		if (t != nullNode)
@@ -127,6 +174,7 @@ public partial class Treap:Godot.Node{
 
 	private void DisplayTreeStructure(TreapNode t, int depth = 0)
 	{
+
 		if (t != nullNode)
 		{
 			DisplayTreeStructure(t.right, depth + 1);
@@ -151,13 +199,14 @@ public partial class Treap:Godot.Node{
 
 	public void Insert(int x){
 		if(root==nullNode){
-			root=new TreapNode(x, nullNode, nullNode, random.Next());
+			root=new TreapNode(random.Next()%100, nullNode, nullNode, random.Next());
 			root.instance=draw_node();
 			root.instance.SetLabelText(x.ToString());
-			root.instance.Position = new Vector2(500, 100);
+			root.instance.Position = new Vector2(500, -400);
+			GD.Print($"valor: {root.element}, EjeX= {root.instance.Position.X}, EjeY= {root.instance.Position.Y}");
 			return;
 		}
-		root = Insert(x, root, null,false);
+		root = Insert(random.Next()%100, root, null,false,0);
 	}
 
 	public void Remove(int x){
@@ -183,7 +232,7 @@ public partial class Treap:Godot.Node{
 
 	private PackedScene TNode;
 	private LineDrawer drawer;
-	private int i = 0;
+	private int i = 50;
 	private float timer = 4.5f;
 	private const float insertDelay = 5.0f;
 
@@ -194,7 +243,9 @@ public partial class Treap:Godot.Node{
 		if (timer >= insertDelay)
 		{
 			// Insert the number i into the Treap
+			GD.Print("testeo1");
 			Insert(i);
+			GD.Print("testeo");
 
 			// Output information (optional)
 			//GD.Print("Inserted ", i, " into the Treap.");
@@ -202,7 +253,7 @@ public partial class Treap:Godot.Node{
 			GD.Print("\n");
 
 			// Increment i for the next insertion
-			i++;
+			i--;
 
 			// Reset timer for the next insert
 			timer = 0.0f;

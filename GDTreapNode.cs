@@ -12,7 +12,6 @@ public partial class GDTreapNode : Node2D
 		label.Modulate = new Color(0, 0, 0);
 	}
 
-	// Método para establecer el texto
 	public void SetLabelText(string text)
 	{
 		label.Text = text;
