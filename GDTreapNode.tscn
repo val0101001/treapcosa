@@ -1,7 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://ckqfskxlc1mix"]
+[gd_scene load_steps=5 format=3 uid="uid://ckqfskxlc1mix"]
 
 [ext_resource type="Script" path="res://GDTreapNode.cs" id="1_2xsax"]
 [ext_resource type="Texture2D" uid="uid://b2ws2gjgvpqnn" path="res://Assets/TreapNode/node_placeholder.png" id="2_m2mym"]
+[ext_resource type="Script" path="res://Area_treap.gd" id="3_0g1ke"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_kbhdy"]
+radius = 59.0085
 
 [node name="GDTreapNode" type="Node2D"]
 script = ExtResource("1_2xsax")
@@ -21,3 +25,12 @@ text = "NO ESCRIBE
 "
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Area_treap" type="Area2D" parent="." groups=["collision_TreapNode"]]
+script = ExtResource("3_0g1ke")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area_treap"]
+position = Vector2(8, 0)
+shape = SubResource("CircleShape2D_kbhdy")
+
+[connection signal="area_entered" from="Area_treap" to="Area_treap" method="_on_area_entered"]

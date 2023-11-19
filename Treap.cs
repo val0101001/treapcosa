@@ -21,8 +21,42 @@ public partial class Treap:Godot.Node{
 	private TreapNode root;
 	private TreapNode nullNode;
 	private readonly Random random = new Random();
-	// Para graficar rot_derecha
-	private TreapNode hijos_d(ref TreapNode hijo, int val){
+	// Para graficar rot_derecha_up
+	private TreapNode hijos_d_up(ref TreapNode hijo, int val){
+		if(hijo==nullNode)
+			return nullNode;
+		hijo.instance.Position= new Vector2(
+			hijo.instance.Position.X+val,
+			hijo.instance.Position.Y-(val)
+			);
+		GD.Print(hijo.left.element.ToString());
+		hijo.left=hijos_d_up(ref hijo.left,val);
+		hijo.right=hijos_d_up(ref hijo.right,val);	
+		return hijo;
+	}
+	private TreapNode hijos_truquito_d_up(ref TreapNode hijo,int val){
+		hijo.left=hijos_d_up(ref hijo.left,val);
+		return hijo;
+	}
+	//grafico rot_izquierdo_up
+	private TreapNode hijos_i_up(ref TreapNode hijo, int val){
+		if(hijo==nullNode)
+			return nullNode;
+		hijo.instance.Position= new Vector2(
+			hijo.instance.Position.X-val,
+			hijo.instance.Position.Y-(val)
+			);
+		GD.Print(hijo.left.element.ToString());
+		hijo.left=hijos_i_up(ref hijo.left,val);
+		hijo.right=hijos_i_up(ref hijo.right,val);	
+		return hijo;
+	}
+	private TreapNode hijos_truquito_i_up(ref TreapNode hijo,int val){
+		hijo.right=hijos_i_up(ref hijo.right,val);
+		return hijo;
+	}
+	
+	private TreapNode hijos_d_down(ref TreapNode hijo, int val){
 		if(hijo==nullNode)
 			return nullNode;
 		hijo.instance.Position= new Vector2(
@@ -30,20 +64,20 @@ public partial class Treap:Godot.Node{
 			hijo.instance.Position.Y+(val)
 			);
 		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_d(ref hijo.left,val);
-		hijo.right=hijos_d(ref hijo.right,val);	
+		hijo.left=hijos_d_down(ref hijo.left,val);
+		hijo.right=hijos_d_down(ref hijo.right,val);	
 		return hijo;
 	}
-	private TreapNode hijos_truquito_d(ref TreapNode hijo,int val){
+	private TreapNode hijos_truquito_d_down(ref TreapNode hijo,int val){
 		hijo.instance.Position= new Vector2(
 			hijo.instance.Position.X-val,
 			hijo.instance.Position.Y+val
 			);
-		hijo.left=hijos_d(ref hijo.left,val);
+		hijo.left=hijos_d_down(ref hijo.left,val);
 		return hijo;
 	}
 	//grafico rot_izquierdo
-	private TreapNode hijos_i(ref TreapNode hijo, int val){
+	private TreapNode hijos_i_down(ref TreapNode hijo, int val){
 		if(hijo==nullNode)
 			return nullNode;
 		hijo.instance.Position= new Vector2(
@@ -51,21 +85,21 @@ public partial class Treap:Godot.Node{
 			hijo.instance.Position.Y+(val)
 			);
 		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_i(ref hijo.left,val);
-		hijo.right=hijos_i(ref hijo.right,val);	
+		hijo.left=hijos_i_down(ref hijo.left,val);
+		hijo.right=hijos_i_down(ref hijo.right,val);	
 		return hijo;
 	}
-	private TreapNode hijos_truquito_i(ref TreapNode hijo,int val){
+	private TreapNode hijos_truquito_i_down(ref TreapNode hijo,int val){
 		hijo.instance.Position= new Vector2(
 			hijo.instance.Position.X+val,
 			hijo.instance.Position.Y+val
 			);
-		hijo.right=hijos_i(ref hijo.right,val);
+		hijo.right=hijos_i_down(ref hijo.right,val);
 		return hijo;
 	}
 	private void RotateWithLeftChild(ref TreapNode k2){
 		GD.Print("(LEFT)");
-		k2=hijos_truquito_i(ref k2,150);
+		k2=hijos_truquito_i_down(ref k2,150);
 		TreapNode k1 = k2.left;
 		k2.left = k1.right;
 		k1.right = k2;
@@ -77,11 +111,12 @@ public partial class Treap:Godot.Node{
 			k2.instance.Position.X+150,
 			k2.instance.Position.Y-150
 		);
+		k2=hijos_truquito_d_up(ref k2,150);
 	}
 
 	private void RotateWithRightChild(ref TreapNode k1){
 		GD.Print("(Right)");
-		k1=hijos_truquito_d(ref k1,150);
+		k1=hijos_truquito_d_down(ref k1,150);
 		TreapNode k2 = k1.right;
 		k1.right = k2.left;
 		k2.left = k1;	
@@ -92,6 +127,7 @@ public partial class Treap:Godot.Node{
 			k1.instance.Position.X-150,
 			k1.instance.Position.Y-150
 		);
+		k1=hijos_truquito_i_up(ref k1,150);
 
 	}
 
@@ -104,16 +140,15 @@ private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int le
 		new_child.instance.SetLabelText(x.ToString());
 		GD.Print($"{height} , {level}");
 		// sacale el (1+(0.2*(height-level + 1))) y queda con colision
-		double xOffset = (left ? -1 : 1) * 150 *(1+(0.2*(height-level + 1)));
+		 
 		new_child.instance.Position = new Vector2(
-			parent.instance.Position.X + (float)xOffset,
+			parent.instance.Position.X + (left ? -1 : 1) * 150 ,
 			parent.instance.Position.Y + 150
 		);
 
 		GD.Print($"valorInsert: {new_child.element}, priority:{new_child.priority}, EjeX= {new_child.instance.Position.X}, EjeY= {new_child.instance.Position.Y}");
 		GD.Print($"valorParent: {parent.element}, priority:{parent.priority}, EjeXParent= {parent.instance.Position.X}, EjeYParent= {parent.instance.Position.Y}");
 		// lo agregue para la colision
-		height+=1;
 		return new_child;
 	}
 	else if (x < t.element)
@@ -199,14 +234,14 @@ private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int le
 
 	public void Insert(int x){
 		if(root==nullNode){
-			root=new TreapNode(random.Next()%100, nullNode, nullNode, random.Next());
+			root=new TreapNode(x, nullNode, nullNode, random.Next());
 			root.instance=draw_node();
 			root.instance.SetLabelText(x.ToString());
 			root.instance.Position = new Vector2(500, -400);
 			GD.Print($"valor: {root.element}, EjeX= {root.instance.Position.X}, EjeY= {root.instance.Position.Y}");
 			return;
 		}
-		root = Insert(random.Next()%100, root, null,false,0);
+		root = Insert(x, root, null,false,0);
 	}
 
 	public void Remove(int x){
@@ -243,9 +278,9 @@ private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int le
 		if (timer >= insertDelay)
 		{
 			// Insert the number i into the Treap
-			GD.Print("testeo1");
-			Insert(i);
-			GD.Print("testeo");
+
+			Insert(random.Next());
+
 
 			// Output information (optional)
 			//GD.Print("Inserted ", i, " into the Treap.");
