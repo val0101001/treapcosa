@@ -2,214 +2,170 @@ using Godot;
 using System;
 
 public partial class Treap:Godot.Node{
-	private class TreapNode{
-		public int element;
+    private class TreapNode{
+        public int element;
 		public GDTreapNode instance;
-		public TreapNode left;
-		public TreapNode right;
-		public int priority;
+        public TreapNode left;
+        public TreapNode right;
+        public int height=1;
+        public int weight=1;
+        public int priority;
 
-		public TreapNode() : this(default(int), null, null, int.MaxValue) { }
-		public TreapNode(int e, TreapNode lt, TreapNode rt, int pr){
-			element = e;
-			left = lt;
-			right = rt;
-			priority = pr;
-		}
-	}
-	private int height=0;
-	private TreapNode root;
+        public TreapNode() : this(default(int), null, null, int.MaxValue) { }
+
+        public TreapNode(int e, TreapNode lt, TreapNode rt, int pr){
+            element = e;
+            left = lt;
+            right = rt;
+            priority = pr;
+        }
+    }
+
+    private TreapNode root;
 	private TreapNode nullNode;
-	private readonly Random random = new Random();
-	// Para graficar rot_derecha_up
-	private TreapNode hijos_d_up(ref TreapNode hijo, int val){
-		if(hijo==nullNode)
-			return nullNode;
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X+val,
-			hijo.instance.Position.Y-(val)
-			);
-		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_d_up(ref hijo.left,val);
-		hijo.right=hijos_d_up(ref hijo.right,val);	
-		return hijo;
-	}
-	private TreapNode hijos_truquito_d_up(ref TreapNode hijo,int val){
-		hijo.left=hijos_d_up(ref hijo.left,val);
-		return hijo;
-	}
-	//grafico rot_izquierdo_up
-	private TreapNode hijos_i_up(ref TreapNode hijo, int val){
-		if(hijo==nullNode)
-			return nullNode;
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X-val,
-			hijo.instance.Position.Y-(val)
-			);
-		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_i_up(ref hijo.left,val);
-		hijo.right=hijos_i_up(ref hijo.right,val);	
-		return hijo;
-	}
-	private TreapNode hijos_truquito_i_up(ref TreapNode hijo,int val){
-		hijo.right=hijos_i_up(ref hijo.right,val);
-		return hijo;
-	}
-	
-	private TreapNode hijos_d_down(ref TreapNode hijo, int val){
-		if(hijo==nullNode)
-			return nullNode;
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X-val,
-			hijo.instance.Position.Y+(val)
-			);
-		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_d_down(ref hijo.left,val);
-		hijo.right=hijos_d_down(ref hijo.right,val);	
-		return hijo;
-	}
-	private TreapNode hijos_truquito_d_down(ref TreapNode hijo,int val){
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X-val,
-			hijo.instance.Position.Y+val
-			);
-		hijo.left=hijos_d_down(ref hijo.left,val);
-		return hijo;
-	}
-	//grafico rot_izquierdo
-	private TreapNode hijos_i_down(ref TreapNode hijo, int val){
-		if(hijo==nullNode)
-			return nullNode;
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X+val,
-			hijo.instance.Position.Y+(val)
-			);
-		GD.Print(hijo.left.element.ToString());
-		hijo.left=hijos_i_down(ref hijo.left,val);
-		hijo.right=hijos_i_down(ref hijo.right,val);	
-		return hijo;
-	}
-	private TreapNode hijos_truquito_i_down(ref TreapNode hijo,int val){
-		hijo.instance.Position= new Vector2(
-			hijo.instance.Position.X+val,
-			hijo.instance.Position.Y+val
-			);
-		hijo.right=hijos_i_down(ref hijo.right,val);
-		return hijo;
-	}
-	private void RotateWithLeftChild(ref TreapNode k2){
-		GD.Print("(LEFT)");
-		k2=hijos_truquito_i_down(ref k2,150);
-		TreapNode k1 = k2.left;
-		k2.left = k1.right;
-		k1.right = k2;
-		if(k2==root)
-			root= k1;
-		k2 = k1;
-		
-		k2.instance.Position= new Vector2(
-			k2.instance.Position.X+150,
-			k2.instance.Position.Y-150
-		);
-		k2=hijos_truquito_d_up(ref k2,150);
-	}
+    private readonly Random random = new Random();
 
-	private void RotateWithRightChild(ref TreapNode k1){
-		GD.Print("(Right)");
-		k1=hijos_truquito_d_down(ref k1,150);
-		TreapNode k2 = k1.right;
-		k1.right = k2.left;
-		k2.left = k1;	
-		if(k1==root)
-			root= k2;
-		k1=k2;
-		k1.instance.Position= new Vector2(
-			k1.instance.Position.X-150,
-			k1.instance.Position.Y-150
-		);
-		k1=hijos_truquito_i_up(ref k1,150);
+    const float separation_x=125;
+    const float separation_y=125;
 
-	}
+    private int height(TreapNode n){
+        return (n!=null&&n!=nullNode)?n.height:0;
+    }
 
-private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int level)
-{
-	if (t == nullNode)
-	{
-		TreapNode new_child = new TreapNode(x, nullNode, nullNode, random.Next());
-		new_child.instance = draw_node();
-		new_child.instance.SetLabelText(x.ToString());
-		GD.Print($"{height} , {level}");
-		// sacale el (1+(0.2*(height-level + 1))) y queda con colision
-		 
-		new_child.instance.Position = new Vector2(
-			parent.instance.Position.X + (left ? -1 : 1) * 150 ,
-			parent.instance.Position.Y + 150
-		);
+    private int weight(TreapNode n){
+        return (n!=null&&n!=nullNode)?n.weight:0;
+    }
 
-		GD.Print($"valorInsert: {new_child.element}, priority:{new_child.priority}, EjeX= {new_child.instance.Position.X}, EjeY= {new_child.instance.Position.Y}");
-		GD.Print($"valorParent: {parent.element}, priority:{parent.priority}, EjeXParent= {parent.instance.Position.X}, EjeYParent= {parent.instance.Position.Y}");
-		// lo agregue para la colision
-		return new_child;
-	}
-	else if (x < t.element)
-	{
-		t.left = Insert(x, t.left, t, true, level + 1);
-		if (t.left.priority < t.priority)
-			RotateWithLeftChild(ref t);
-	}
-	else if (x > t.element)
-	{
-		t.right = Insert(x, t.right, t, false, level + 1);
-		if (t.right.priority < t.priority)
-			RotateWithRightChild(ref t);
-	}
-	return t;
-}
+    private void update_height(ref TreapNode n){
+        n.height=Math.Max(height(n.left),height(n.right))+1;
+    }
 
+    private void update_weight(ref TreapNode n){
+        n.weight=weight(n.left)+weight(n.right)+1;
+    }
 
-	private TreapNode Remove(int x, TreapNode t){
-		if (t != nullNode)
-		{
-			if (x<t.element)
-				t.left = Remove(x, t.left);
-			else if (x>t.element)
-				t.right = Remove(x, t.right);
-			else
-			{
-				if (t.left == nullNode)
-					return t.right;
-				else if (t.right == nullNode)
-					return t.left;
+    private void move_right(ref TreapNode n){
+        int w_left=weight(n.left)+1;
+        n.instance.Position=new Vector2(
+            separation_x*w_left,
+            separation_y
+        );
+    }
 
-				if (t.left.priority < t.right.priority)
-				{
-					RotateWithLeftChild(ref t);
-					t.right = Remove(x, t.right);
-				}
-				else
-				{
-					RotateWithRightChild(ref t);
-					t.left = Remove(x, t.left);
-				}
-			}
+    private void move_left(ref TreapNode n){
+        int w_right=weight(n.right)+1;
+        n.instance.Position=new Vector2(
+            -separation_x*w_right,
+            separation_y
+        );
+    }
+
+    private void update_distances(ref TreapNode n){
+        if(n.left.instance!=null){
+            move_left(ref n.left);
+        }
+        if(n.right.instance!=null){
+            move_right(ref n.right);
+        }
+    }
+
+    private void RotateWithLeftChild(ref TreapNode k2){
+        TreapNode k1 = k2.left;
+        k2.left = k1.right;
+        k1.right = k2;
+        k2 = k1;
+
+        k1.right.priority = k2.priority;
+        k2.priority = Math.Max(k1.left.priority, k1.right.priority) + 1;
+    }
+
+    private void RotateWithRightChild(ref TreapNode k1){
+        TreapNode k2 = k1.right;
+        k1.right = k2.left;
+        k2.left = k1;
+        k1 = k2;
+
+        k2.left.priority = k1.priority;
+        k1.priority = Math.Max(k2.right.priority, k2.left.priority) + 1;
+    }
+
+    private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left){
+        if (t == nullNode){
+			TreapNode new_child=new TreapNode(x, nullNode, nullNode, random.Next());
+            draw_node(ref new_child,ref parent);
+
+			update_height(ref new_child);
+            update_weight(ref new_child);
+            update_distances(ref new_child);
+
+            Label label=new_child.instance.GetNode<Label>("Label");
+            label.Text=$"{x}";
+
+			return new_child;
 		}
-		return t;
-	}
 
-	private bool Contains(int x, TreapNode t){
-		if (t == nullNode)
-			return false;
-		else if (x<t.element)
-			return Contains(x, t.left);
-		else if (x>t.element)
-			return Contains(x, t.right);
-		else
-			return true;
-	}
+        else if (x<t.element)
+        {
+            t.left = Insert(x, t.left,t,true);
+            //if (t.left.priority < t.priority)
+              //  RotateWithLeftChild(ref t);
+        }
+        else if (x>t.element)
+        {
+            t.right = Insert(x, t.right,t,false);
+            //if (t.right.priority < t.priority)
+              //  RotateWithRightChild(ref t);
+        }
 
-	private void DisplayTreeStructure(TreapNode t, int depth = 0)
+        update_height(ref t);
+        update_weight(ref t);
+        update_distances(ref t);
+
+        return t;
+    }
+
+    private TreapNode Remove(int x, TreapNode t){
+        if (t != nullNode)
+        {
+            if (x<t.element)
+                t.left = Remove(x, t.left);
+            else if (x>t.element)
+                t.right = Remove(x, t.right);
+            else
+            {
+                if (t.left == nullNode)
+                    return t.right;
+                else if (t.right == nullNode)
+                    return t.left;
+
+                if (t.left.priority < t.right.priority)
+                {
+                    RotateWithLeftChild(ref t);
+                    t.right = Remove(x, t.right);
+                }
+                else
+                {
+                    RotateWithRightChild(ref t);
+                    t.left = Remove(x, t.left);
+                }
+            }
+        }
+        return t;
+    }
+
+    private bool Contains(int x, TreapNode t){
+        if (t == nullNode)
+            return false;
+        else if (x<t.element)
+            return Contains(x, t.left);
+        else if (x>t.element)
+            return Contains(x, t.right);
+        else
+            return true;
+    }
+
+    private void DisplayTreeStructure(TreapNode t, int depth = 0)
 	{
-
 		if (t != nullNode)
 		{
 			DisplayTreeStructure(t.right, depth + 1);
@@ -219,42 +175,41 @@ private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int le
 				tabs += "\t";
 			}
 			GD.Print($"{tabs}{t.element} (Priority: {t.priority})");
-			DisplayTreeStructure(t.left, depth + 1);
+        	DisplayTreeStructure(t.left, depth + 1);
 		}
 	}
 
-	private GDTreapNode draw_node(){
-		if (TNode == null) return null;
+	private void draw_node(ref TreapNode current,ref TreapNode parent){
+        if (TNode == null) return;
 
-		var node_instance=(GDTreapNode)TNode.Instantiate();
-		AddChild(node_instance);
+		current.instance=(GDTreapNode)TNode.Instantiate();
+		if(parent!=nullNode) parent.instance.AddChild(current.instance);
+    }
 
-		return node_instance;
-	}
-
-	public void Insert(int x){
+    public void Insert(int x){
 		if(root==nullNode){
 			root=new TreapNode(x, nullNode, nullNode, random.Next());
-			root.instance=draw_node();
-			root.instance.SetLabelText(x.ToString());
-			root.instance.Position = new Vector2(500, -400);
-			GD.Print($"valor: {root.element}, EjeX= {root.instance.Position.X}, EjeY= {root.instance.Position.Y}");
+            draw_node(ref root,ref nullNode);
+			root.instance.Position = new Vector2(500, 100);
+            Label label=root.instance.GetNode<Label>("Label");
+            label.Text=$"{x}";
+            AddChild(root.instance);
 			return;
 		}
-		root = Insert(x, root, null,false,0);
-	}
+        root = Insert(x, root, null,false);
+    }
 
-	public void Remove(int x){
-		root = Remove(x, root);
-	}
+    public void Remove(int x){
+        root = Remove(x, root);
+    }
 
-	public bool Contains(int x){
-		return Contains(x, root);
-	}
+    public bool Contains(int x){
+        return Contains(x, root);
+    }
 
-	public void DisplayTreeStructure(){
-		DisplayTreeStructure(root);
-	}
+    public void DisplayTreeStructure(){
+        DisplayTreeStructure(root);
+    }
 
 	public override void _Ready(){
 		nullNode=new TreapNode();
@@ -263,35 +218,32 @@ private TreapNode Insert(int x, TreapNode t, TreapNode parent, bool left, int le
 		nullNode.priority=int.MaxValue;
 		root=nullNode;
 		TNode=GD.Load<PackedScene>("res://GDTreapNode.tscn");
+        Insert(500);
 	}
 
 	private PackedScene TNode;
 	private LineDrawer drawer;
-	private int i = 50;
-	private float timer = 4.5f;
-	private const float insertDelay = 5.0f;
+	private int i = 0;
+
+    private void delete(ref TreapNode n){
+        n.instance.QueueFree();
+        root=nullNode;
+        i=0;
+        Insert(500);
+    }
+
+    // sea el caso de que alguien este leyendo esto, hola xd
+    // para debugear permiti controlar la camara con las flechitas
+    // insercion de un numero aleatorio del 0 al 999 con enter
+    // y borras el arbol entero con esc
 
 	public override void _Process(double delta){
-		timer += (float)delta;
-
-		// Check if the time delay has elapsed (10 seconds)
-		if (timer >= insertDelay)
-		{
-			// Insert the number i into the Treap
-
-			Insert(random.Next());
-
-
-			// Output information (optional)
-			//GD.Print("Inserted ", i, " into the Treap.");
-			DisplayTreeStructure();
-			GD.Print("\n");
-
-			// Increment i for the next insertion
-			i--;
-
-			// Reset timer for the next insert
-			timer = 0.0f;
-		}
+        if(Input.IsActionJustPressed("ui_accept")){
+            int x=random.Next()%1000;
+            Insert(x);
+        }
+        if(Input.IsActionJustPressed("ui_cancel")){
+            delete(ref root);
+        }
 	}
 }

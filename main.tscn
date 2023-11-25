@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://d0qefxpjt8roa"]
+
+[ext_resource type="PackedScene" uid="uid://btwwbnusvrrpl" path="res://treap.tscn" id="1_cctii"]
+[ext_resource type="Script" path="res://Camera2D.cs" id="2_hdt8q"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Treap" parent="." instance=ExtResource("1_cctii")]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("2_hdt8q")
