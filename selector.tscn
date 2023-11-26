@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8oqdpju2yb3l"]
+
+[ext_resource type="Texture2D" uid="uid://b2ws2gjgvpqnn" path="res://Assets/TreapNode/node_placeholder.png" id="1_oyt2s"]
+[ext_resource type="Script" path="res://Selector.cs" id="2_ub50i"]
+
+[node name="Selector" type="Sprite2D"]
+modulate = Color(1, 0, 0, 1)
+scale = Vector2(0.077, 0.077)
+texture = ExtResource("1_oyt2s")
+script = ExtResource("2_ub50i")

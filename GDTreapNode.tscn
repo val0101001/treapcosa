@@ -10,16 +10,21 @@ font_color = Color(0, 0, 0, 1)
 [node name="GDTreapNode" type="Node2D"]
 script = ExtResource("1_2xsax")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(8, 0)
+[node name="Node" type="Sprite2D" parent="."]
 scale = Vector2(0.07, 0.07)
 texture = ExtResource("2_m2mym")
 
-[node name="Label" type="Label" parent="."]
-offset_left = -36.0
-offset_top = -26.0
-offset_right = 56.0
-offset_bottom = 35.0
+[node name="Outline" type="Sprite2D" parent="Node"]
+modulate = Color(1, 0, 0, 1)
+z_index = -1
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("2_m2mym")
+
+[node name="Value" type="Label" parent="."]
+offset_left = -44.0
+offset_top = -27.0
+offset_right = 48.0
+offset_bottom = 34.0
 scale = Vector2(0.968755, 0.87437)
 text = "1
 "
