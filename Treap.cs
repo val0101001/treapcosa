@@ -487,7 +487,7 @@ public partial class Treap:Godot.Node{
         }
     }
 
-    void begin_insert(int x){
+    public void begin_insert(int x){
         inserting=true;
         insert_n=x;
         insert_current=root;
@@ -667,7 +667,7 @@ public partial class Treap:Godot.Node{
         reorder_tree(root);
     }
 
-    void begin_remove(int x){
+    public void begin_remove(int x){
         GD.Print("removing ",x);
         removing=true;
         remove_n=x;
