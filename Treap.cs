@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Reflection.Metadata.Ecma335;
 
 public partial class Treap:Godot.Node{
     private class TreapNode{
@@ -46,28 +47,42 @@ public partial class Treap:Godot.Node{
         return (n!=null&&n!=nullNode)?n.weight:0;
     }
 
-    private void update_height(ref TreapNode n){
+    private void update_height(TreapNode n){
         n.height=Math.Max(height(n.left),height(n.right))+1;
     }
 
-    private void update_weight(ref TreapNode n){
+    private void update_weight(TreapNode n){
         n.weight=weight(n.left)+weight(n.right)+1;
     }
 
-    private void move_right(ref TreapNode n){
+    private async Task move_right(TreapNode n){
+        if(n.left!=null&&n.left!=nullNode) update_weight(n.left);
+        update_weight(n);
+
         int w_left=weight(n.left)+1;
-        n.instance.Position=new Vector2(
+
+        n.instance.set_move(new Vector2(
             separation_x*w_left,
             separation_y
-        );
+        ));
+
+        await ToSignal(GetTree().CreateTimer(time_delay),"timeout");
+
+        //n.instance.Position=
     }
 
-    private void move_left(ref TreapNode n){
+    private async Task move_left(TreapNode n){
+        if(n.right!=null&&n.right!=nullNode) update_weight(n.right);
+        update_weight(n);
+
         int w_right=weight(n.right)+1;
-        n.instance.Position=new Vector2(
+        
+        n.instance.set_move(new Vector2(
             -separation_x*w_right,
             separation_y
-        );
+        ));
+
+        await ToSignal(GetTree().CreateTimer(time_delay),"timeout");
     }
 
     private void print_children(TreapNode n){
@@ -77,36 +92,48 @@ public partial class Treap:Godot.Node{
         GD.Print("");
     }
 
-    private void update_distances(ref TreapNode n){
+    private async Task update_distances(TreapNode n){
         if(n.left.instance!=null){
-            move_left(ref n.left);
+            await move_left(n.left);
         }
         if(n.right.instance!=null){
-            move_right(ref n.right);
+            await move_right(n.right);
         }
     }
 
-    private void RotateWithLeftChild(ref TreapNode k2){
+    private TreapNode RotateWithLeftChild(TreapNode k2,TreapNode parent){
         rotate_with_left(ref k2);
 
         TreapNode k1 = k2.left;
         k2.left = k1.right;
         k1.right = k2;
 
-        if(k1==root){
+        if(k2==root){
             root=k1;
+            root.instance.Position=new Vector2(0,0);
+            if(k2.element<root.element) root.left=k2;
+            else root.right=k2;
+        }
+        else if(parent.left==k2){
+            parent.left=k1;
+            GD.Print("parent left: ",parent.element);
+        }
+        else{
+            parent.right=k1;
+            GD.Print("parent right: ",parent.element);
         }
 
-        k2 = k1;
-        
         //k1.right.priority = k2.priority;
         //k2.priority = Math.Max(k1.left.priority, k1.right.priority) + 1;
 
-        reorder_tree(ref root);
+        reorder_tree(root);
+        //no_anim_reorder(root);
+
+        return k1;
     }
 
     // this
-    private void RotateWithRightChild(ref TreapNode k1){
+    private TreapNode RotateWithRightChild(TreapNode k1,TreapNode parent){
         rotate_with_right(ref k1);
 
         TreapNode k2 = k1.right;
@@ -114,15 +141,27 @@ public partial class Treap:Godot.Node{
         k2.left = k1;
 
         if(k1==root){
-            root=k1;
+            root=k2;
+            root.instance.Position=new Vector2(0,0);
+            if(k1.element<root.element) root.left=k1;
+            else root.right=k1;
         }
-
-        k1 = k2;
+        else if(parent.left==k1){
+            parent.left=k2;
+            GD.Print("parent left: ",parent.element);
+        }
+        else{
+            parent.right=k2;
+            GD.Print("parent right: ",parent.element);
+        }
 
         //k2.left.priority = k1.priority;
         //k1.priority = Math.Max(k2.right.priority, k2.left.priority) + 1;
         
-        reorder_tree(ref root);
+        reorder_tree(root);
+        //no_anim_reorder(root);
+
+        return k2;
     }
 
     private void rotate_with_right(ref TreapNode k1){
@@ -173,42 +212,78 @@ public partial class Treap:Godot.Node{
         }
     }
 
-    void reorder_tree(ref TreapNode n){
-        update_height(ref n);
-        update_weight(ref n);
-        update_distances(ref n);
-        if(n.left!=null&&n.left!=nullNode) reorder_tree(ref n.left);
-        if(n.right!=null&&n.right!=nullNode) reorder_tree(ref n.right);
+    private async Task reorder_tree(TreapNode n){
+        if(n.left!=null&&n.left!=nullNode) await reorder_tree(n.left);
+        if(n.right!=null&&n.right!=nullNode) await reorder_tree(n.right);
+        update_height(n);
+        update_weight(n);
+        update_distances(n);
+        //no_anim_reorder(n);
+    }
+
+    private void no_anim_reorder(TreapNode n){
+        if(n.left!=null&&n.left!=nullNode) no_anim_reorder(n.left);
+        if(n.right!=null&&n.right!=nullNode) no_anim_reorder(n.right);
+
+        update_height(n);
+        update_weight(n);
+
+        if(n.left.instance!=null){
+            int w_right=weight(n.left.right)+1;
+            n.left.instance.Position=new Vector2(
+                -separation_x*w_right,
+                separation_y
+            );
+        }
+        if(n.right.instance!=null){
+            int w_left=weight(n.right.left)+1;
+            n.right.instance.Position=new Vector2(
+                separation_x*w_left,
+                separation_y
+            );
+        }
+
+        //if(n.left!=null&&n.left!=nullNode) no_anim_reorder(n.left);
+        //if(n.right!=null&&n.right!=nullNode) no_anim_reorder(n.right);
     }
 
     const float time_delay=0.5f;
 
     private async Task<TreapNode> Insert(int x, TreapNode t, TreapNode parent){
         if (t == nullNode){
-            parent.instance.set_outline(true);
-
 			TreapNode new_child=new TreapNode(x, nullNode, nullNode, random.Next());
             draw_node(ref new_child,ref parent);
             Label label=new_child.instance.GetNode<Label>("Value");
             label.Text=$"{x}";
 
-            parent.instance.set_outline(false);
+            new_child.instance.Visible=false;
 
-			update_height(ref new_child);
-            update_weight(ref new_child);
-            update_distances(ref new_child);
+            if(x<parent.element){
+                parent.left=new_child;
+                
+                new_child.instance.Position=new Vector2(
+                    -separation_x,
+                    separation_y
+                );
+            }
+            else if(x>parent.element){
+                parent.right=new_child;
+                
+                new_child.instance.Position=new Vector2(
+                    separation_x,
+                    separation_y
+                );
+            }
 
-            new_child.instance.set_outline(true);
-
+            selector.set_move(new_child.instance.GlobalPosition);
+            await reorder_tree(parent);
             await ToSignal(GetTree().CreateTimer(time_delay),"timeout");
 
-            new_child.instance.set_outline(false);            
+            new_child.instance.Visible=true;
+            await ToSignal(GetTree().CreateTimer(time_delay),"timeout");
 
 			return new_child;
 		}
-
-        if(parent!=null&&parent.instance!=null) parent.instance.set_outline(false);
-        t.instance.set_outline(true);
 
         selector.set_move(t.instance.GlobalPosition);
         await ToSignal(GetTree().CreateTimer(time_delay),"timeout");
@@ -216,23 +291,33 @@ public partial class Treap:Godot.Node{
         if(x<t.element){
             t.left=await Insert(x,t.left,t);
             if(t.left.priority<t.priority){
-                RotateWithLeftChild(ref t);
+                //TreapNode result=RotateWithLeftChild(t,ref parent);
+                /*if(parent!=null){
+                    if(parent.left==t) parent.left=result;
+                    else parent.right=result;
+                }
+                else{
+                    root=result;
+                }*/
             }
         }
         else if(x>t.element){
-            t.right=await Insert(x, t.right,t);
+            t.right=await Insert(x,t.right,t);
             if(t.right.priority<t.priority){
-                RotateWithRightChild(ref t);
+                //TreapNode result=RotateWithRightChild(t,ref parent);
+                /*if(parent!=null){
+                    //parent.right=result;
+                    if(parent.left==t) parent.left=result;
+                    else parent.right=result;
+                }
+                else{
+                    root=result;
+                }*/
             }
         }
 
-        t.instance.set_outline(false);
-
-        update_height(ref t);
-        update_weight(ref t);
-        update_distances(ref t);
-
-        reorder_tree(ref root);
+        await reorder_tree(t);
+        //no_anim_reorder(t);
 
         traversal.Push(t.instance.GlobalPosition);
 
@@ -300,6 +385,7 @@ public partial class Treap:Godot.Node{
         if (TNode == null) return;
 
 		current.instance=(GDTreapNode)TNode.Instantiate();
+        current.instance.Visible=false;
 		if(parent!=nullNode) parent.instance.AddChild(current.instance);
     }
 
@@ -307,6 +393,7 @@ public partial class Treap:Godot.Node{
 		if(root==nullNode){
 			root=new TreapNode(x, nullNode, nullNode, random.Next());
             draw_node(ref root,ref nullNode);
+            root.instance.Visible=true;
 			root.instance.Position = new Vector2(0,0);
             Label label=root.instance.GetNode<Label>("Value");
             label.Text=$"{x}";
@@ -318,6 +405,8 @@ public partial class Treap:Godot.Node{
         root.instance.Position = new Vector2(0,0);
         DisplayTreeStructure();
         selector.set_move(new Vector2(0,0));
+        await reorder_tree(root);
+        //no_anim_reorder(root);
     }
 
     public void Remove(int x){
@@ -363,8 +452,9 @@ public partial class Treap:Godot.Node{
     }
 
     private void start(){
-        xd=new List<int>(){242,688,893};
+        xd=new List<int>(){10,5,20,15,25};
         i=0;
+        current=null;
     }
 
     // sea el caso de que alguien este leyendo esto, hola xd
@@ -374,20 +464,227 @@ public partial class Treap:Godot.Node{
 
     List<int> xd;
 
+    TreapNode current=null;
+    TreapNode prev=null;
+
+    void wasd(){
+        if(Input.IsActionJustPressed("a")){
+            if(current.left!=null&&current.left!=nullNode){
+                current.instance.set_visible(false);
+                prev=current;
+                current=current.left;
+                current.instance.set_visible(true);
+            }
+        }
+        if(Input.IsActionJustPressed("d")){
+            if(current.right!=null&&current.right!=nullNode){
+                current.instance.set_visible(false);
+                prev=current;
+                current=current.right;
+                current.instance.set_visible(true);
+            }
+        }
+        if(Input.IsActionJustPressed("w")){
+            if(current!=null&&current!=nullNode) current.instance.set_visible(false);
+            prev=null;
+            current=root;
+            current.instance.set_visible(true);
+        }
+    }
+
+
+    bool once=false;
+
+    int insert_n;
+    TreapNode insert_current=null;
+    TreapNode insert_parent=null;
+    bool inserting=false;
+
+    int insert_phase=-1;
+
+    private void insert_root(){
+        root=new TreapNode(insert_n,nullNode,nullNode,random.Next());
+        draw_node(ref root,ref nullNode);
+        root.instance.Visible=true;
+        root.instance.Position = new Vector2(0,0);
+        Label label=root.instance.GetNode<Label>("Value");
+        label.Text=$"{insert_n}";
+        AddChild(root.instance);
+        DisplayTreeStructure();
+        inserting=false;
+        insert_current=null;
+        insert_parent=null;
+    }
+
+    private void insert_node(){
+        TreapNode new_child=new TreapNode(insert_n,nullNode,nullNode,random.Next());
+        draw_node(ref new_child,ref insert_parent);
+        Label label=new_child.instance.GetNode<Label>("Value");
+        label.Text=$"{insert_n}";
+
+        new_child.instance.Visible=false;
+
+        if(insert_n<insert_parent.element){
+            insert_parent.left=new_child;
+            
+            new_child.instance.Position=new Vector2(
+                -separation_x,
+                separation_y
+            );
+        }
+        else if(insert_n>insert_parent.element){
+            insert_parent.right=new_child;
+            
+            new_child.instance.Position=new Vector2(
+                separation_x,
+                separation_y
+            );
+        }
+
+        insert_phase=1;
+
+        selector.set_move(new_child.instance.GlobalPosition);
+        timer=0.01;
+
+        insert_current=new_child;
+    }
+
+    double timer=0;
+    double time_duration=time_delay;
+
+
+    bool delay(){
+        if(timer!=0){
+            timer+=delta;
+            if(timer>=time_duration) timer=0;
+            return true;
+        }
+        return false;
+    }
+
+
+    Stack<(TreapNode,TreapNode,bool)> rotate_queue=new Stack<(TreapNode, TreapNode,bool)>();
+
+    private void rotation_queue(){
+        foreach((TreapNode,TreapNode,bool) item in rotate_queue){
+            if(item.Item3){
+                if(item.Item2!=null&&item.Item1.left.priority<item.Item2.priority){
+                    RotateWithLeftChild(item.Item1,item.Item2);
+                    timer=0.01;
+                }   
+            }
+            else{
+                if(item.Item2!=null&&item.Item1.right.priority<item.Item2.priority){
+                    RotateWithRightChild(item.Item1,item.Item2);
+                    timer=0.01;
+                }
+            }
+            rotate_queue.Pop();
+        }
+    }
+
+    private void insert(){
+        // if inserting on root
+        if(root==nullNode){
+            insert_root();
+            insert_phase=-1;
+            inserting=false;
+            insert_current=null;
+            insert_parent=null;
+            DisplayTreeStructure();
+            reorder_tree(root);
+            timer=0;
+            selector.set_move(new Vector2(0,0));
+            return;
+        }
+
+        if(insert_current==nullNode){
+            insert_node();
+            return;
+        }
+
+        if(insert_n<insert_current.element){
+            rotate_queue.Push((insert_current,insert_parent,true));
+
+            insert_parent=insert_current;
+            insert_current=insert_current.left;
+        }
+        else if(insert_n>insert_current.element){
+            rotate_queue.Push((insert_current,insert_parent,false));
+
+            insert_parent=insert_current;
+            insert_current=insert_current.right;
+        }
+
+        if(insert_current!=null&&insert_current!=nullNode){
+            selector.set_move(insert_current.instance.GlobalPosition);
+            timer=0.01;
+        }
+
+    }
+
+    void begin_insert(int x){
+        inserting=true;
+        insert_n=x;
+        insert_current=root;
+        insert_parent=null;
+        insert_phase=0;
+        return;
+    }
+
 	public override void _Process(double delta){
+        this.delta=delta;
+
+        wasd();
+
+        if(inserting){
+            if(delay()) return;
+            
+            if(insert_phase==0) insert();
+
+            else if(insert_phase==1){
+                reorder_tree(root);
+                selector.set_move(new Vector2(0,0));
+                insert_current.instance.Visible=true;
+                insert_phase=2;
+                timer=0.01;
+            }
+
+            else if(insert_phase==2){
+                rotation_queue();
+                reorder_tree(root);
+                insert_phase=-1;
+                inserting=false;
+                insert_current=null;
+                insert_parent=null;
+                DisplayTreeStructure();
+            }
+            return;
+        }
+
         if(Input.IsActionJustPressed("ui_accept")){
             int x=random.Next()%1000;
-            Insert(x);
+            begin_insert(x);
+
             /*if(xd.Count!=0){
-                Insert(xd.First());
+                begin_insert(xd.First());
                 xd.Remove(xd.First());
                 return;
             }
-            RotateWithRightChild(root,null);
-            reorder_tree(ref root);*/
+            if(!once){
+                RotateWithRightChild(current,prev);
+                DisplayTreeStructure();
+                once=true;
+            }
+            else{
+                RotateWithLeftChild(current,prev);
+                DisplayTreeStructure();
+                once=false;
+            }*/
+            //reorder_tree(root);
         }
         if(Input.IsActionJustPressed("ui_cancel")){
-            delete(ref root);
+            reorder_tree(root);
         }
 	}
 }

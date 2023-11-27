@@ -5,6 +5,7 @@
 
 [node name="Selector" type="Sprite2D"]
 modulate = Color(1, 0, 0, 1)
+z_index = -2
 scale = Vector2(0.077, 0.077)
 texture = ExtResource("1_oyt2s")
 script = ExtResource("2_ub50i")

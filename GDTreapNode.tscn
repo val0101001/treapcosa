@@ -15,7 +15,7 @@ scale = Vector2(0.07, 0.07)
 texture = ExtResource("2_m2mym")
 
 [node name="Outline" type="Sprite2D" parent="Node"]
-modulate = Color(1, 0, 0, 1)
+modulate = Color(0, 0, 1, 1)
 z_index = -1
 scale = Vector2(1.1, 1.1)
 texture = ExtResource("2_m2mym")
