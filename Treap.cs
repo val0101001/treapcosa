@@ -228,46 +228,6 @@ public partial class Treap:Godot.Node{
 
     const float time_delay=0.5f;
 
-    private TreapNode Remove(int x, TreapNode t){
-        if (t != nullNode)
-        {
-            if (x<t.element)
-                t.left = Remove(x, t.left);
-            else if (x>t.element)
-                t.right = Remove(x, t.right);
-            else
-            {
-                if (t.left == nullNode)
-                    return t.right;
-                else if (t.right == nullNode)
-                    return t.left;
-
-                if (t.left.priority < t.right.priority)
-                {
-                    //RotateWithLeftChild(ref t);
-                    t.right = Remove(x, t.right);
-                }
-                else
-                {
-                    //RotateWithRightChild(ref t);
-                    t.left = Remove(x, t.left);
-                }
-            }
-        }
-        return t;
-    }
-
-    private bool Contains(int x, TreapNode t){
-        if (t == nullNode)
-            return false;
-        else if (x<t.element)
-            return Contains(x, t.left);
-        else if (x>t.element)
-            return Contains(x, t.right);
-        else
-            return true;
-    }
-
     private void DisplayTreeStructure(TreapNode t, int depth = 0)
 	{
 		if (t != nullNode)
@@ -291,15 +251,6 @@ public partial class Treap:Godot.Node{
 		if(parent!=nullNode) parent.instance.AddChild(current.instance);
     }
 
-
-    public void Remove(int x){
-        root = Remove(x, root);
-    }
-
-    public bool Contains(int x){
-        return Contains(x, root);
-    }
-
     public void DisplayTreeStructure(){
         DisplayTreeStructure(root);
         GD.Print("");
@@ -317,39 +268,6 @@ public partial class Treap:Godot.Node{
 
 	private PackedScene TNode;
 	private LineDrawer drawer;
-
-    // sea el caso de que alguien este leyendo esto, hola xd
-    // para debugear permiti controlar la camara con las flechitas
-    // insercion de un numero aleatorio del 0 al 999 con enter
-    // y borras el arbol entero con esc
-
-    TreapNode current=null;
-    TreapNode prev=null;
-
-    void wasd(){
-        if(Input.IsActionJustPressed("a")){
-            if(current.left!=null&&current.left!=nullNode){
-                current.instance.set_visible(false);
-                prev=current;
-                current=current.left;
-                current.instance.set_visible(true);
-            }
-        }
-        if(Input.IsActionJustPressed("d")){
-            if(current.right!=null&&current.right!=nullNode){
-                current.instance.set_visible(false);
-                prev=current;
-                current=current.right;
-                current.instance.set_visible(true);
-            }
-        }
-        if(Input.IsActionJustPressed("w")){
-            if(current!=null&&current!=nullNode) current.instance.set_visible(false);
-            prev=null;
-            current=root;
-            current.instance.set_visible(true);
-        }
-    }
 
 /// 
 ///         GENERAL
@@ -703,34 +621,99 @@ public partial class Treap:Godot.Node{
 
 
 /// 
+///         FIND
+///          
+
+    int find_n;
+    TreapNode find_current=null;
+    TreapNode find_parent=null;
+    bool finding=false;
+
+    int find_phase=-1;
+
+    private void find(){
+        if(find_current==nullNode){ // not found
+            Vector2 pos=new Vector2(
+                find_parent.instance.GlobalPosition.X+separation_x*((find_n>find_parent.element)?1:-1),
+                find_parent.instance.GlobalPosition.Y+separation_y
+            );
+            selector.set_move(pos);
+            start_timer();
+            find_phase=1;
+            return;
+        }
+        if(find_n==find_current.element){ // found
+            selector.set_move(find_current.instance.GlobalPosition);
+            start_timer();
+            find_phase=1;
+            return;
+        }
+
+        find_parent=find_current;
+        if(find_n<find_current.element){
+            find_current=find_current.left;
+        }
+        else if(find_n>find_current.element){
+            find_current=find_current.right;
+        }
+
+        if(find_current!=null&&find_current!=nullNode){
+            selector.set_move(find_current.instance.GlobalPosition);
+            start_timer();
+        }
+    }    
+
+    public void begin_find(int x){
+        find_n=x;
+        find_current=root;
+        finding=true;
+        find_phase=0;
+    }
+
+    void find_phases(){
+        if(delay()) return;
+        
+        if(find_phase==0){
+            find();
+        }
+
+        else if(find_phase==1){
+            start_timer();
+            find_phase=2;
+        }
+
+        else if(find_phase==2){
+            selector.set_move(new Vector2(0,0));
+            insert_current=null;
+            insert_parent=null;
+            finding=false;
+            find_phase=-1;
+        }
+    }
+
+/// 
 ///         PROCESS
 /// 
 
 	public override void _Process(double delta){
         this.delta=delta;
 
-        wasd();
-
-        if(inserting){
+        if(inserting&&!removing&&!finding){
             insert_phases();
             return;
         }
 
-        if(removing){
+        if(removing&&!inserting&&!finding){
             remove_phases();
             return;
         }
 
-        if(Input.IsActionJustPressed("ui_accept")){
-            int x=random.Next()%1000;
-            begin_insert(x);
+        if(finding&&!inserting&&!removing){
+            find_phases();
+            return;
         }
 
-        if(Input.IsActionJustPressed("back")){
-            int x=current.element;
-            begin_remove(x);
-        }
-
+        // debug
         if(Input.IsActionJustPressed("ui_cancel")){
             reorder_tree(root);
         }
