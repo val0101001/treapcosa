@@ -15,6 +15,7 @@ public partial class Treap:Godot.Node{
 		public GDTreapNode instance;
 		public TreapNode left;
 		public TreapNode right;
+        public LineDrawer line=null;
 		public int height=1;
 		public int weight=1;
 		public int priority;
@@ -248,7 +249,13 @@ public partial class Treap:Godot.Node{
 
 		current.instance=(GDTreapNode)TNode.Instantiate();
 		current.instance.Visible=false;
-		if(parent!=nullNode) parent.instance.AddChild(current.instance);
+        current.line=new LineDrawer();
+
+		if(parent!=nullNode){
+            parent.instance.AddChild(current.instance);
+            parent.line.draw_line(parent.instance.GlobalPosition,current.instance.GlobalPosition,true);
+        }
+        else AddChild(current.instance);
     }
 
     public void DisplayTreeStructure(){
@@ -267,7 +274,6 @@ public partial class Treap:Godot.Node{
 	}
 
 	private PackedScene TNode;
-	private LineDrawer drawer;
 
 /// 
 ///         GENERAL
@@ -307,6 +313,7 @@ public partial class Treap:Godot.Node{
 		root.instance.Position = new Vector2(0,0);
 		Label label=root.instance.GetNode<Label>("Value");
 		label.Text=$"{insert_n}";
+        root.instance.set_priority(root.priority);
 		AddChild(root.instance);
 		DisplayTreeStructure();
 		inserting=false;
@@ -319,6 +326,7 @@ public partial class Treap:Godot.Node{
 		draw_node(ref new_child,ref insert_parent);
 		Label label=new_child.instance.GetNode<Label>("Value");
 		label.Text=$"{insert_n}";
+        new_child.instance.set_priority(new_child.priority);
 
 		new_child.instance.Visible=false;
 
@@ -479,7 +487,7 @@ public partial class Treap:Godot.Node{
 			remove_current=remove_current.left;
 
 			if(remove_current!=null&&remove_current!=nullNode){
-				selector.set_move(insert_current.instance.GlobalPosition);
+				selector.set_move(remove_current.instance.GlobalPosition);
 				start_timer();
 			}
 		}
@@ -488,7 +496,7 @@ public partial class Treap:Godot.Node{
 			remove_current=remove_current.right;
 
 			if(remove_current!=null&&remove_current!=nullNode){
-				selector.set_move(insert_current.instance.GlobalPosition);
+				selector.set_move(remove_current.instance.GlobalPosition);
 				start_timer();
 			}
 		}

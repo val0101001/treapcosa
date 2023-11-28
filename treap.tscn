@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Treap.cs" id="1_3v0pf"]
 [ext_resource type="Script" path="res://LineDrawer.cs" id="2_ucchb"]
-[ext_resource type="PackedScene" path="res://selector.tscn" id="3_vlou7"]
+[ext_resource type="PackedScene" uid="uid://c8oqdpju2yb3l" path="res://selector.tscn" id="3_vlou7"]
 
 [node name="Treap" type="Node"]
 script = ExtResource("1_3v0pf")

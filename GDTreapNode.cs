@@ -4,7 +4,8 @@ using System;
 public partial class GDTreapNode : Node2D
 {
 	// Called when the node enters the scene tree for the first time.
-	Label label;
+	Label value;
+	Label priority;
 	Sprite2D sprite;
 	Sprite2D outline;
 
@@ -75,23 +76,37 @@ public partial class GDTreapNode : Node2D
 	}
 
 	public override void _Ready(){
-		label=GetNode<Label>("Value");
+		value=GetNode<Label>("Value");
+		priority=GetNode<Label>("Priority");
 		sprite=GetNode<Sprite2D>("Node");
 		outline=sprite.GetNode<Sprite2D>("Outline");
 		outline.Visible=false;
 	}
 
 	public void print(){
-		GD.Print(label.Text);
+		GD.Print(value.Text);
 	}
 
 	public void set_visible(bool x){
 		outline.Visible=x;
 	}
 
-	public string text(){
-		return label.Text;
+	public string get_value(){
+		return value.Text;
 	}
+
+	public void set_value(int x){
+		value.Text=x.ToString();
+	}
+
+	public string get_priority(){
+		return priority.Text;
+	}
+
+	public void set_priority(int x){
+		priority.Text=x.ToString();
+	}
+
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta){
